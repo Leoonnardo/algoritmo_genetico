@@ -8,53 +8,54 @@ class Repartidor:
     y: int
     destinos = []
     ruta = []
+    destinos_visitados = [int]
     pasos: int
-    direccion = None
+    direccion: int
     enLimiteX: bool
     enLimiteY: bool
 
     def __init__(self, x: int, y: int, **destinos):
         self.x = x
         self.y = y
-        self.destinos.append(destinos.get("local"))
-        self.destinos.append(destinos.get("cliente"))
-        self.ruta.append([self.x, self.y])
+        for destino in destinos.keys():
+            self.destinos.append(destinos[destino])
+            self.ruta.append([])
+        self.ruta[0].append([self.x, self.y])
         self.pasos = 0
 
-    def elegirDireccion(self, limites):
+    def elegirDireccion(self, destino):
         # Elige la dirección que tomará de manera aleatoria
         # disminuyendo o aumentando una de las coordenadas necesarias para
         # ubicarse en el plano cartesiano
         # Eje: indica sobre que eje se actuará, 0 para abscisas 1 para ordenadas
         # Operador: indica que se hará con dicha coordenada, 1 para aumentar, 0 para disminuir
+        if len(self.ruta[destino]) == 0:
+            self.ruta[destino].append([self.x, self.y])
 
         eje = random.randint(0, 1)
-        if self.x > self.destinos[0][0]:
-            if self.y > self.destinos[0][1]:
-                operador = 0
-                paso = self.__caminar(eje, operador)
-            elif eje:
+
+        coords = self.destinos[destino]
+
+        if eje:
+            if self.y < coords[eje]:
                 operador = 1
                 paso = self.__caminar(eje, operador)
-            else:
+                self.__paso(paso, destino)
+            elif self.y > coords[eje]:
                 operador = 0
                 paso = self.__caminar(eje, operador)
-        elif self.y > self.destinos[0][1]:
-            if eje:
-                operador = 0
-                paso = self.__caminar(eje, operador)
-            else:
-                operador = 1
-                paso = self.__caminar(eje, operador)
-        else:
+                self.__paso(paso, destino)
+        elif self.x < coords[eje]:
             operador = 1
             paso = self.__caminar(eje, operador)
-
-        self.__paso(paso)
+            self.__paso(paso, destino)
+        elif self.x > coords[eje]:
+            operador = 0
+            paso = self.__caminar(eje, operador)
+            self.__paso(paso, destino)
 
 
         # repetido = True
-
         # limitesX = limites[0]
         # limitesY = limites[1]
         # # breakpoint()
@@ -255,8 +256,17 @@ class Repartidor:
                 y -= 1
         return [x, y]
 
-    def __paso(self, paso):
-        self.ruta.append(paso)
-        self.x = paso[0]
-        self.y = paso[1]
-        self.pasos += 1
+    def __paso(self, paso, destino):
+        if not self.__eval(paso, destino):
+            self.ruta[destino].append(paso)
+            self.x = paso[0]
+            self.y = paso[1]
+            self.pasos += 1
+
+    def __eval(self, paso, destino):
+        # breakpoint()
+        for coords in self.ruta[destino]:
+            if coords[0] == paso[0] and coords[1] == paso[1]:
+                return True
+            if self.ruta[destino].index(coords) == len(self.ruta[destino]) - 1:
+                return False
